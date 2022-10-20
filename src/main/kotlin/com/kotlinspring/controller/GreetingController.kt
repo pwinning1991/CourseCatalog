@@ -1,6 +1,6 @@
-package com.kotlinspring.catalogservice.controller
+package com.kotlinspring.controller
 
-import com.kotlinspring.catalogservice.service.GreetingsService
+import com.kotlinspring.service.GreetingsService
 import mu.KLogging
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
