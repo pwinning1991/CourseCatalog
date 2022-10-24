@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBody
 
 @WebMvcTest(controllers = [CourseController::class])
 @AutoConfigureWebTestClient
@@ -47,18 +48,42 @@ class CourseControllerUnitTest {
         val courseDTO = CourseDTO(null, "", "")
         every { courseServiceMockk.addCourse(any()) } returns courseDTO(id = 1)
 
-        val savedCourseDTO = webTestClient.post()
+        val response = webTestClient.post()
             .uri("/v1/courses")
             .bodyValue(courseDTO)
             .exchange()
             .expectStatus().isBadRequest
+            .expectBody(String::class.java)
+            .returnResult()
+            .responseBody
+
+        Assertions.assertEquals("courseDTO.category must not be blank, courseDTO.name must not be blank", response)
+
+    }
+
+    @Test
+    fun addCourse_runtimeException() {
+        val courseDTO = CourseDTO(null, "Build Restful APIs using Springboot and Kotlin", "Phil")
+        val errorMessage = "Unexpected Error occurred"
+        every { courseServiceMockk.addCourse(any()) } throws RuntimeException(errorMessage)
+
+        val response = webTestClient.post()
+            .uri("/v1/courses")
+            .bodyValue(courseDTO)
+            .exchange()
+            .expectStatus().is5xxServerError
+            .expectBody(String::class.java)
+            .returnResult()
+            .responseBody
+
+        Assertions.assertEquals(errorMessage, response)
 
     }
 
     @Test
     fun retrieveAllCourses(){
 
-        every { courseServiceMockk.retrieveAllCourses() }.returnsMany(
+        every { courseServiceMockk.retrieveAllCourses(any()) }.returnsMany(
             listOf(courseDTO(id=1),
                 courseDTO(id=2,"This is a test")))
         val courseDTOs = webTestClient.get()
